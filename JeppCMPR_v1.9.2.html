@@ -1,0 +1,1939 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JeppCMPR - PDF Comparison Tool</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 2200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px 30px;
+            text-align: center;
+            position: relative;
+        }
+
+        .header h1 {
+            font-size: 2em;
+            margin-bottom: 5px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .header p {
+            font-size: 0.9em;
+            opacity: 0.9;
+        }
+
+        .version-badge {
+            position: absolute;
+            top: 10px;
+            right: 20px;
+            background: rgba(255,255,255,0.2);
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.9em;
+        }
+
+        .upload-section {
+            padding: 40px;
+            text-align: center;
+        }
+
+        .drop-zone {
+            border: 3px dashed #667eea;
+            border-radius: 15px;
+            padding: 60px 40px;
+            background: #f8f9ff;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            margin-bottom: 30px;
+        }
+
+        .drop-zone:hover, .drop-zone.drag-over {
+            background: #e8ebff;
+            border-color: #764ba2;
+            transform: scale(1.02);
+        }
+
+        .drop-zone-icon {
+            font-size: 4em;
+            margin-bottom: 20px;
+        }
+
+        .drop-zone-text {
+            font-size: 1.3em;
+            color: #667eea;
+            margin-bottom: 10px;
+            font-weight: bold;
+        }
+
+        .drop-zone-hint {
+            color: #666;
+            font-size: 0.95em;
+        }
+
+        .btn {
+            padding: 15px 35px;
+            font-size: 1.1em;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: bold;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+        }
+
+        .btn-secondary {
+            background: #e0e0e0;
+            color: #333;
+        }
+
+        .btn-secondary:hover {
+            background: #d0d0d0;
+        }
+
+        .file-input {
+            display: none;
+        }
+
+        .comparison-section {
+            display: none;
+        }
+
+        .comparison-grid {
+            display: grid;
+            grid-template-columns: 250px 1fr 250px;
+            gap: 0;
+            min-height: 600px;
+        }
+
+        .sidebar {
+            background: #f5f5f5;
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .sidebar-left {
+            border-right: 3px solid #667eea;
+        }
+
+        .sidebar-right {
+            border-left: 3px solid #667eea;
+        }
+
+        .sidebar h3 {
+            margin-bottom: 10px;
+            color: #667eea;
+            font-size: 0.9em;
+        }
+
+        .sidebar-scroll {
+            flex: 1;
+            overflow-y: auto;
+            margin-bottom: 10px;
+        }
+
+        .main-content {
+            display: flex;
+            flex-direction: column;
+            background: white;
+        }
+
+        .control-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .control-item {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .control-item label {
+            font-weight: bold;
+            color: #333;
+            font-size: 0.85em;
+        }
+
+        .control-item input[type="range"] {
+            width: 100%;
+        }
+
+        .control-item .value-display {
+            text-align: center;
+            font-size: 0.9em;
+            color: #666;
+        }
+
+        .mode-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .mode-btn {
+            padding: 10px;
+            border: 2px solid #667eea;
+            background: white;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: bold;
+            font-size: 0.85em;
+            text-align: center;
+        }
+
+        .mode-btn.active {
+            background: #667eea;
+            color: white;
+        }
+
+        .view-control {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .view-buttons {
+            display: flex;
+            gap: 8px;
+        }
+
+        .view-btn {
+            flex: 1;
+            padding: 10px;
+            border: 2px solid #999;
+            background: #e0e0e0;
+            color: #333;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: bold;
+            font-size: 0.85em;
+        }
+
+        .view-btn.active-old {
+            background: #dc3545;
+            border-color: #dc3545;
+            color: white;
+        }
+
+        .view-btn.active-new {
+            background: #28a745;
+            border-color: #28a745;
+            color: white;
+        }
+
+        .auto-btn {
+            padding: 10px;
+            border: 2px solid #999;
+            background: #e0e0e0;
+            color: #333;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: bold;
+            font-size: 0.85em;
+        }
+
+        .auto-btn.active {
+            background: #007bff;
+            border-color: #007bff;
+            color: white;
+        }
+
+        .action-btn {
+            padding: 10px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 0.85em;
+            transition: all 0.3s ease;
+        }
+
+        .action-btn:hover {
+            background: #5568d3;
+        }
+
+        .icao-group {
+            margin-bottom: 8px;
+        }
+
+        .icao-header {
+            padding: 8px 10px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            font-weight: bold;
+            font-size: 0.75em;
+            border-radius: 6px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.3s ease;
+            user-select: none;
+        }
+
+        .icao-header:hover {
+            transform: translateX(3px);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        }
+
+        /* FIX #2: Styl dla OLD/NEW grup (czerwony/zielony) */
+        .icao-header.unpaired-old {
+            background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+        }
+
+        .icao-header.unpaired-new {
+            background: linear-gradient(135deg, #28a745 0%, #218838 100%);
+        }
+
+        .icao-header .arrow {
+            transition: transform 0.3s ease;
+        }
+
+        .icao-header.collapsed .arrow {
+            transform: rotate(-90deg);
+        }
+
+        .icao-files {
+            max-height: none;
+            overflow: visible;
+            opacity: 1;
+        }
+
+        .icao-files.hidden {
+            max-height: 0;
+            opacity: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease, opacity 0.3s ease;
+        }
+
+        .pair-item-sidebar {
+            padding: 8px;
+            background: white;
+            margin: 3px 0;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border-left: 2px solid transparent;
+            font-size: 0.7em;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .pair-item-sidebar .checkbox {
+            width: 14px;
+            height: 14px;
+            border: 2px solid #667eea;
+            border-radius: 3px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            background: white;
+            transition: all 0.2s ease;
+            font-size: 10px;
+        }
+
+        .pair-item-sidebar.checked .checkbox {
+            background: #28a745;
+            border-color: #28a745;
+        }
+
+        .pair-item-sidebar.checked .checkbox::after {
+            content: '✓';
+            color: white;
+            font-weight: bold;
+        }
+
+        .pair-item-sidebar:hover {
+            background: #e8ebff;
+            transform: translateX(2px);
+        }
+
+        .pair-item-sidebar.active {
+            background: #667eea;
+            color: white;
+            border-left-color: #764ba2;
+        }
+
+        /* FIX #2: Styl dla aktywnej nieparzystej mapy (czerwone podświetlenie) */
+        .pair-item-sidebar.active-unpaired {
+            background: #dc3545;
+            color: white;
+            border-left-color: #c82333;
+        }
+
+        .pair-item-sidebar.active .checkbox,
+        .pair-item-sidebar.active-unpaired .checkbox {
+            border-color: white;
+        }
+
+        /* FIX #1: Styl dla nazw w wielu liniach */
+        .pair-item-sidebar .pair-name {
+            flex: 1;
+            min-width: 0;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+            line-height: 1.3;
+        }
+
+        .pair-item-sidebar .pair-name-main {
+            font-weight: bold;
+        }
+
+        .pair-item-sidebar .pair-name-pages {
+            font-size: 0.9em;
+            color: #666;
+            margin-top: 2px;
+        }
+
+        .viewer-wrapper {
+            padding: 20px;
+            background: #e9ecef;
+            display: flex;
+            align-items: flex-start;
+            justify-content: center;
+            min-height: 600px;
+            position: relative;
+            overflow: auto;
+            z-index: 1;
+        }
+
+        .viewer-wrapper:fullscreen {
+            overflow: hidden;
+        }
+
+        .sidebyside-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            width: 100%;
+            height: 100%;
+        }
+
+        .sidebyside-viewer {
+            position: relative;
+            background: #fff;
+            border-radius: 8px;
+            overflow: auto;
+            display: flex;
+            align-items: flex-start;
+            justify-content: center;
+            padding: 10px;
+        }
+
+        .canvas-container {
+            position: relative;
+            display: inline-block;
+            background: white;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+            max-width: 100%;
+            transition: transform 0.1s ease-out;
+            transform-origin: 0 0;
+        }
+
+        canvas {
+            display: block;
+            max-width: 100%;
+            height: auto;
+        }
+
+        .canvas-label {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: rgba(0,0,0,0.8);
+            color: white;
+            padding: 8px 15px;
+            border-radius: 5px;
+            font-weight: bold;
+            font-size: 0.95em;
+            z-index: 1000;
+            pointer-events: none;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+        }
+
+        .sidebyside-label {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: rgba(0,0,0,0.8);
+            color: white;
+            padding: 8px 15px;
+            border-radius: 5px;
+            font-weight: bold;
+            font-size: 0.95em;
+            z-index: 1000;
+            pointer-events: none;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+        }
+
+        .sidebyside-label.old {
+            background: rgba(220, 53, 69, 0.8);
+        }
+
+        .sidebyside-label.new {
+            background: rgba(40, 167, 69, 0.8);
+        }
+
+        .reset-zoom-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(102, 126, 234, 0.7);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 10px 15px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 0.85em;
+            z-index: 1000;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+        }
+
+        .reset-zoom-btn:hover {
+            background: rgba(102, 126, 234, 0.9);
+            transform: scale(1.05);
+        }
+
+        .exit-fullscreen-btn {
+            position: absolute;
+            bottom: 10px;
+            right: 10px;
+            background: rgba(220, 53, 69, 0.7);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 12px 18px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 0.9em;
+            z-index: 1000;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+            display: none;
+        }
+
+        .exit-fullscreen-btn:hover {
+            background: rgba(220, 53, 69, 0.9);
+            transform: scale(1.05);
+        }
+
+        .viewer-wrapper:fullscreen .exit-fullscreen-btn {
+            display: block;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 40px;
+        }
+
+        .spinner {
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid #667eea;
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .page-nav {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            justify-content: center;
+            padding: 10px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #dee2e6;
+        }
+
+        .page-nav button {
+            padding: 8px 16px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 0.85em;
+        }
+
+        .page-nav button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        .page-info {
+            padding: 8px 16px;
+            background: white;
+            border-radius: 5px;
+            font-weight: bold;
+            font-size: 0.85em;
+        }
+
+        .stats-box {
+            padding: 10px;
+            background: white;
+            border-radius: 8px;
+            font-size: 0.75em;
+        }
+
+        .stats-box div {
+            margin: 4px 0;
+            color: #666;
+        }
+
+        .stats-box strong {
+            color: #333;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>✈️ JeppCMPR</h1>
+            <p>Professional PDF Comparison Tool</p>
+            <div class="version-badge">v1.9.2</div>
+        </div>
+
+        <div class="upload-section" id="uploadSection">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-bottom: 20px;">
+                <div>
+                    <h3 style="text-align: center; margin-bottom: 15px; color: #dc3545;">📁 FOLDER OLD</h3>
+                    <div class="drop-zone" id="dropZoneOld" style="border-color: #dc3545;">
+                        <div class="drop-zone-icon">📥</div>
+                        <div class="drop-zone-text" style="color: #dc3545;">Przeciągnij pliki OLD tutaj</div>
+                        <div class="drop-zone-hint">lub użyj przycisku poniżej</div>
+                    </div>
+                    <button class="btn btn-primary" onclick="loadOldFolder()" style="width: 100%; margin-top: 15px; background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);">
+                        📂 Wybierz pliki OLD
+                    </button>
+                    <div id="oldFilesCount" style="margin-top: 10px; text-align: center; color: #666;">Nie załadowano</div>
+                </div>
+                
+                <div>
+                    <h3 style="text-align: center; margin-bottom: 15px; color: #28a745;">📁 FOLDER NEW</h3>
+                    <div class="drop-zone" id="dropZoneNew" style="border-color: #28a745;">
+                        <div class="drop-zone-icon">📥</div>
+                        <div class="drop-zone-text" style="color: #28a745;">Przeciągnij pliki NEW tutaj</div>
+                        <div class="drop-zone-hint">lub użyj przycisku poniżej</div>
+                    </div>
+                    <button class="btn btn-primary" onclick="loadNewFolder()" style="width: 100%; margin-top: 15px; background: linear-gradient(135deg, #28a745 0%, #218838 100%);">
+                        📂 Wybierz pliki NEW
+                    </button>
+                    <div id="newFilesCount" style="margin-top: 10px; text-align: center; color: #666;">Nie załadowano</div>
+                </div>
+            </div>
+
+            <div id="compareButtonContainer" style="text-align: center; display: none;">
+                <button class="btn btn-primary" onclick="startComparison()" style="padding: 20px 50px; font-size: 1.3em;">
+                    🚀 Rozpocznij porównanie
+                </button>
+            </div>
+
+            <input type="file" id="oldFileInput" class="file-input" accept=".pdf" multiple>
+            <input type="file" id="newFileInput" class="file-input" accept=".pdf" multiple>
+
+            <div style="margin-top: 30px; padding: 20px; background: #fff3cd; border-radius: 10px; border: 2px solid #ffc107;">
+                <strong>💡 Instrukcja:</strong><br>
+                1. Wybierz wszystkie pliki PDF z folderu OLD<br>
+                2. Wybierz wszystkie pliki PDF z folderu NEW<br>
+                3. Kliknij "🚀 Rozpocznij porównanie"<br>
+                <br>
+                <small>💾 Domyślna lokalizacja: <code>N:\3P Model Area\Autocompare\OLD</code> i <code>...\NEW</code></small>
+            </div>
+        </div>
+
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p id="loadingText">Ładowanie i przetwarzanie plików PDF...</p>
+            <div style="width: 80%; max-width: 600px; margin: 20px auto; background: #f0f0f0; border-radius: 10px; overflow: hidden;">
+                <div id="progressBar" style="height: 30px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); width: 0%; transition: width 0.3s ease; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold;">
+                    0%
+                </div>
+            </div>
+            <p id="progressDetail" style="color: #666; font-size: 0.9em;">Przygotowanie...</p>
+        </div>
+
+        <div class="comparison-section" id="comparisonSection">
+            <div class="comparison-grid">
+                <!-- Left Sidebar -->
+                <div class="sidebar sidebar-left">
+                    <h3>📋 Pary</h3>
+                    <div class="sidebar-scroll" id="pairListSidebar"></div>
+                    
+                    <div class="stats-box">
+                        <div><strong>Wszystkich:</strong> <span id="totalPairs">0</span></div>
+                        <div><strong>Sprawdzonych:</strong> <span id="checkedPairs">0</span></div>
+                        <div style="margin-top: 6px;"><strong>Aktualna:</strong> <span id="currentPairNum">-</span></div>
+                    </div>
+                </div>
+                
+                <!-- Main Content -->
+                <div class="main-content">
+                    <div class="page-nav" id="pageNav" style="display: none;">
+                        <button onclick="prevPage()">⬅️ Poprzednia</button>
+                        <div class="page-info" id="pageInfo">Strona 1 z 1</div>
+                        <button onclick="nextPage()">Następna ➡️</button>
+                    </div>
+
+                    <div class="viewer-wrapper" id="viewerWrapper">
+                        <div id="viewer"></div>
+                        <div class="canvas-label" id="canvasLabel" style="display: none;"></div>
+                        <button class="reset-zoom-btn" id="resetZoomBtn" style="display: none;">🔄 Reset</button>
+                        <button class="exit-fullscreen-btn" id="exitFullscreenBtn">❌ Wyjdź</button>
+                    </div>
+                </div>
+
+                <!-- Right Sidebar -->
+                <div class="sidebar sidebar-right">
+                    <h3>⚙️ Kontrola</h3>
+                    
+                    <div class="control-panel">
+                        <!-- FIX #4: Akcje na górze -->
+                        <div class="control-item">
+                            <label>Akcje:</label>
+                            <button class="action-btn" onclick="toggleFullscreen()">🖵 Pełny ekran</button>
+                        </div>
+
+                        <div class="control-item">
+                            <button class="action-btn" onclick="resetAndUpload()">🔄 Załaduj nowe</button>
+                        </div>
+
+                        <!-- Separator -->
+                        <div style="border-top: 2px solid #ddd; margin: 5px 0;"></div>
+
+                        <!-- Tryby wyświetlania -->
+                        <div class="control-item">
+                            <label>Tryb wyświetlania:</label>
+                            <div class="mode-buttons">
+                                <div class="mode-btn active" onclick="setMode('toggle')">🔄 Przełączanie</div>
+                                <div class="mode-btn" onclick="setMode('overlay')">🎨 Nakładanie</div>
+                                <div class="mode-btn" onclick="setMode('sidebyside')">↔️ Obok siebie</div>
+                            </div>
+                        </div>
+
+                        <!-- Przyciski OLD/NEW/Auto-Start -->
+                        <div class="control-item">
+                            <label>Widok:</label>
+                            <div class="view-control">
+                                <button class="auto-btn" id="autoBtn" onclick="toggleAutoMode()">▶️ Auto-Start</button>
+                                <div class="view-buttons">
+                                    <button class="view-btn" id="oldBtn" onclick="showOldOnly()">OLD</button>
+                                    <button class="view-btn" id="newBtn" onclick="showNewOnly()">NEW</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Prędkość -->
+                        <div class="control-item">
+                            <label>Prędkość auto:</label>
+                            <input type="range" id="speedRange" min="100" max="5000" value="500" step="100">
+                            <div class="value-display" id="speedValue">0.5s</div>
+                        </div>
+
+                        <!-- Przezroczystość -->
+                        <div class="control-item">
+                            <label>Przezroczystość:</label>
+                            <input type="range" id="opacityRange" min="0" max="100" value="50" step="5">
+                            <div class="value-display" id="opacityValue">50%</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+        let pdfPairs = [];
+        let unpairedOld = [];  // FIX #2: Nieparne OLD
+        let unpairedNew = [];  // FIX #2: Nieparne NEW
+        let currentPairIndex = 0;
+        let currentPageIndex = 0;
+        let autoToggleInterval = null;
+        let currentMode = 'toggle';
+        let viewMode = 'auto';
+        let showingOld = true;
+        let checkedPairs = new Set();
+        let oldFiles = [];
+        let newFiles = [];
+        let syncState = { zoom: 1, panX: 0, panY: 0 };
+        let selectedUnpairedOld = null;  // FIX #2: Wybrana mapa OLD
+        let selectedUnpairedNew = null;  // FIX #2: Wybrana mapa NEW
+
+        const dropZoneOld = document.getElementById('dropZoneOld');
+        const dropZoneNew = document.getElementById('dropZoneNew');
+        const oldFileInput = document.getElementById('oldFileInput');
+        const newFileInput = document.getElementById('newFileInput');
+
+        dropZoneOld.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropZoneOld.classList.add('drag-over');
+        });
+
+        dropZoneOld.addEventListener('dragleave', () => {
+            dropZoneOld.classList.remove('drag-over');
+        });
+
+        dropZoneOld.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZoneOld.classList.remove('drag-over');
+            const files = Array.from(e.dataTransfer.files).filter(f => f.name.endsWith('.pdf'));
+            if (files.length > 0) {
+                oldFiles = files;
+                updateFileInfo();
+            }
+        });
+
+        dropZoneNew.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropZoneNew.classList.add('drag-over');
+        });
+
+        dropZoneNew.addEventListener('dragleave', () => {
+            dropZoneNew.classList.remove('drag-over');
+        });
+
+        dropZoneNew.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZoneNew.classList.remove('drag-over');
+            const files = Array.from(e.dataTransfer.files).filter(f => f.name.endsWith('.pdf'));
+            if (files.length > 0) {
+                newFiles = files;
+                updateFileInfo();
+            }
+        });
+
+        oldFileInput.addEventListener('change', (e) => {
+            oldFiles = Array.from(e.target.files).filter(f => f.name.endsWith('.pdf'));
+            updateFileInfo();
+        });
+
+        newFileInput.addEventListener('change', (e) => {
+            newFiles = Array.from(e.target.files).filter(f => f.name.endsWith('.pdf'));
+            updateFileInfo();
+        });
+
+        function updateFileInfo() {
+            const oldCount = document.getElementById('oldFilesCount');
+            const newCount = document.getElementById('newFilesCount');
+            const compareContainer = document.getElementById('compareButtonContainer');
+
+            if (oldFiles.length > 0) {
+                oldCount.textContent = `✅ Załadowano ${oldFiles.length} plików`;
+                oldCount.style.color = '#28a745';
+                oldCount.style.fontWeight = 'bold';
+            } else {
+                oldCount.textContent = '❌ Nie załadowano';
+                oldCount.style.color = '#999';
+            }
+
+            if (newFiles.length > 0) {
+                newCount.textContent = `✅ Załadowano ${newFiles.length} plików`;
+                newCount.style.color = '#28a745';
+                newCount.style.fontWeight = 'bold';
+            } else {
+                newCount.textContent = '❌ Nie załadowano';
+                newCount.style.color = '#999';
+            }
+
+            compareContainer.style.display = (oldFiles.length > 0 && newFiles.length > 0) ? 'block' : 'none';
+        }
+
+        function startComparison() {
+            processFiles(oldFiles, newFiles);
+        }
+
+        function loadOldFolder() {
+            oldFileInput.click();
+        }
+
+        function loadNewFolder() {
+            newFileInput.click();
+        }
+
+        async function processFiles(oldFilesList, newFilesList) {
+            document.getElementById('uploadSection').style.display = 'none';
+            document.getElementById('loading').style.display = 'block';
+
+            const updateProgress = (percent, text) => {
+                const bar = document.getElementById('progressBar');
+                const detail = document.getElementById('progressDetail');
+                bar.style.width = percent + '%';
+                bar.textContent = Math.round(percent) + '%';
+                detail.textContent = text;
+            };
+
+            updateProgress(0, 'Filtrowanie plików...');
+            await new Promise(resolve => setTimeout(resolve, 100));
+
+            const filterFile = (file) => {
+                const name = file.name.toUpperCase();
+                return !name.includes('CHARACTERISTICS') && 
+                       !name.includes('GEN') && 
+                       !name.includes('ENR');
+            };
+
+            const filteredOldFiles = oldFilesList.filter(filterFile);
+            const filteredNewFiles = newFilesList.filter(filterFile);
+
+            updateProgress(10, 'Dopasowywanie par plików...');
+
+            const oldFileMap = new Map();
+            const newFileMap = new Map();
+            
+            filteredOldFiles.forEach(file => oldFileMap.set(file.name, file));
+            filteredNewFiles.forEach(file => newFileMap.set(file.name, file));
+
+            let pairs = [];
+            let unmatchedOld = [];
+            let unmatchedNew = [];
+            
+            const allNames = new Set([...oldFileMap.keys(), ...newFileMap.keys()]);
+            
+            for (const name of allNames) {
+                const oldFile = oldFileMap.get(name);
+                const newFile = newFileMap.get(name);
+                
+                if (oldFile && newFile) {
+                    // Para znaleziona
+                    let icao = '';
+                    const cleanName = name.replace(/^AD\s*2-?/i, '').trim();
+                    const match = cleanName.match(/^([A-Z]{4})/);
+                    if (match) icao = match[1];
+
+                    pairs.push({
+                        name: name,
+                        icao: icao,
+                        oldFile: oldFile,
+                        newFile: newFile,
+                        oldDoc: null,
+                        newDoc: null,
+                        totalPages: 0,
+                        isPaired: true
+                    });
+                } else if (oldFile) {
+                    // FIX #2: OLD bez pary
+                    unmatchedOld.push({
+                        name: name,
+                        file: oldFile,
+                        doc: null,
+                        totalPages: 0
+                    });
+                } else if (newFile) {
+                    // FIX #2: NEW bez pary
+                    unmatchedNew.push({
+                        name: name,
+                        file: newFile,
+                        doc: null,
+                        totalPages: 0
+                    });
+                }
+            }
+
+            pairs.sort((a, b) => {
+                if (a.icao !== b.icao) return a.icao.localeCompare(b.icao);
+                return a.name.localeCompare(b.name);
+            });
+
+            unmatchedOld.sort((a, b) => a.name.localeCompare(b.name));
+            unmatchedNew.sort((a, b) => a.name.localeCompare(b.name));
+
+            pdfPairs = pairs;
+            unpairedOld = unmatchedOld;
+            unpairedNew = unmatchedNew;
+
+            updateProgress(20, 'Ładowanie plików PDF...');
+
+            const totalFiles = (pdfPairs.length * 2) + unpairedOld.length + unpairedNew.length;
+            let loadedFiles = 0;
+
+            // Ładowanie par
+            for (let pair of pdfPairs) {
+                try {
+                    const oldArrayBuffer = await pair.oldFile.arrayBuffer();
+                    pair.oldDoc = await pdfjsLib.getDocument({data: oldArrayBuffer}).promise;
+                    loadedFiles++;
+                    updateProgress(20 + (loadedFiles / totalFiles * 70), `Ładowanie par: ${pair.name.substring(0, 40)}...`);
+                    
+                    const newArrayBuffer = await pair.newFile.arrayBuffer();
+                    pair.newDoc = await pdfjsLib.getDocument({data: newArrayBuffer}).promise;
+                    loadedFiles++;
+                    updateProgress(20 + (loadedFiles / totalFiles * 70), `Ładowanie par: ${pair.name.substring(0, 40)}...`);
+                    
+                    pair.totalPages = Math.max(pair.oldDoc.numPages, pair.newDoc.numPages);
+                } catch (error) {
+                    console.error(`Error loading ${pair.name}:`, error);
+                }
+            }
+
+            // FIX #2: Ładowanie nieparnych OLD
+            for (let item of unpairedOld) {
+                try {
+                    const arrayBuffer = await item.file.arrayBuffer();
+                    item.doc = await pdfjsLib.getDocument({data: arrayBuffer}).promise;
+                    item.totalPages = item.doc.numPages;
+                    loadedFiles++;
+                    updateProgress(20 + (loadedFiles / totalFiles * 70), `Ładowanie OLD: ${item.name.substring(0, 40)}...`);
+                } catch (error) {
+                    console.error(`Error loading ${item.name}:`, error);
+                }
+            }
+
+            // FIX #2: Ładowanie nieparnych NEW
+            for (let item of unpairedNew) {
+                try {
+                    const arrayBuffer = await item.file.arrayBuffer();
+                    item.doc = await pdfjsLib.getDocument({data: arrayBuffer}).promise;
+                    item.totalPages = item.doc.numPages;
+                    loadedFiles++;
+                    updateProgress(20 + (loadedFiles / totalFiles * 70), `Ładowanie NEW: ${item.name.substring(0, 40)}...`);
+                } catch (error) {
+                    console.error(`Error loading ${item.name}:`, error);
+                }
+            }
+
+            updateProgress(100, 'Gotowe!');
+            await new Promise(resolve => setTimeout(resolve, 500));
+
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('comparisonSection').style.display = 'block';
+
+            renderPairList();
+            updateStats();
+            
+            if (pdfPairs.length > 0) {
+                await loadPair(0);
+                setTimeout(() => {
+                    toggleAutoMode();
+                }, 500);
+            }
+        }
+
+        function renderPairList() {
+            const pairList = document.getElementById('pairListSidebar');
+            pairList.innerHTML = '';
+
+            // PARY
+            const icaoGroups = new Map();
+            pdfPairs.forEach((pair, index) => {
+                const icao = pair.icao || 'OTHER';
+                if (!icaoGroups.has(icao)) icaoGroups.set(icao, []);
+                icaoGroups.get(icao).push({ pair, index });
+            });
+
+            icaoGroups.forEach((items, icao) => {
+                const groupDiv = document.createElement('div');
+                groupDiv.className = 'icao-group';
+
+                const header = document.createElement('div');
+                header.className = 'icao-header';
+                header.innerHTML = `<span>✈️ ${icao} (${items.length})</span><span class="arrow">▼</span>`;
+                header.onclick = (e) => {
+                    e.stopPropagation();
+                    header.classList.toggle('collapsed');
+                    filesDiv.classList.toggle('hidden');
+                };
+                groupDiv.appendChild(header);
+
+                const filesDiv = document.createElement('div');
+                filesDiv.className = 'icao-files';
+
+                items.forEach(({ pair, index }) => {
+                    const itemDiv = document.createElement('div');
+                    itemDiv.className = 'pair-item-sidebar';
+                    if (index === currentPairIndex && !selectedUnpairedOld && !selectedUnpairedNew) {
+                        itemDiv.classList.add('active');
+                    }
+                    if (checkedPairs.has(index)) itemDiv.classList.add('checked');
+
+                    const checkbox = document.createElement('div');
+                    checkbox.className = 'checkbox';
+                    checkbox.onclick = (e) => {
+                        e.stopPropagation();
+                        toggleCheckbox(index);
+                    };
+
+                    // FIX #1: Usunięcie ICAO z nazwy w grupie
+                    const nameDiv = document.createElement('div');
+                    nameDiv.className = 'pair-name';
+                    
+                    let displayName = pair.name.replace(/^AD\s*2-?/i, '').trim();
+                    if (pair.icao) {
+                        // Usuń ICAO z początku nazwy
+                        displayName = displayName.replace(new RegExp(`^${pair.icao}[\\s-]*`, 'i'), '').trim();
+                    }
+                    
+                    nameDiv.innerHTML = `
+                        <div class="pair-name-main">${index + 1}. ${displayName}</div>
+                        <div class="pair-name-pages">${pair.totalPages}s</div>
+                    `;
+
+                    itemDiv.appendChild(checkbox);
+                    itemDiv.appendChild(nameDiv);
+                    itemDiv.onclick = (e) => {
+                        if (!e.target.closest('.checkbox')) {
+                            selectedUnpairedOld = null;
+                            selectedUnpairedNew = null;
+                            loadPair(index);
+                        }
+                    };
+                    
+                    filesDiv.appendChild(itemDiv);
+                });
+
+                groupDiv.appendChild(filesDiv);
+                pairList.appendChild(groupDiv);
+            });
+
+            // FIX #2: NIEPARNE OLD
+            if (unpairedOld.length > 0) {
+                const groupDiv = document.createElement('div');
+                groupDiv.className = 'icao-group';
+
+                const header = document.createElement('div');
+                header.className = 'icao-header unpaired-old';
+                header.innerHTML = `<span>🔴 OLD (${unpairedOld.length})</span><span class="arrow">▼</span>`;
+                header.onclick = (e) => {
+                    e.stopPropagation();
+                    header.classList.toggle('collapsed');
+                    filesDiv.classList.toggle('hidden');
+                };
+                groupDiv.appendChild(header);
+
+                const filesDiv = document.createElement('div');
+                filesDiv.className = 'icao-files';
+
+                unpairedOld.forEach((item, index) => {
+                    const itemDiv = document.createElement('div');
+                    itemDiv.className = 'pair-item-sidebar';
+                    if (selectedUnpairedOld === index) {
+                        itemDiv.classList.add('active-unpaired');
+                    }
+
+                    const nameDiv = document.createElement('div');
+                    nameDiv.className = 'pair-name';
+                    nameDiv.innerHTML = `
+                        <div class="pair-name-main">${item.name}</div>
+                        <div class="pair-name-pages">${item.totalPages}s</div>
+                    `;
+
+                    itemDiv.appendChild(nameDiv);
+                    itemDiv.onclick = () => {
+                        selectUnpairedOld(index);
+                    };
+                    
+                    filesDiv.appendChild(itemDiv);
+                });
+
+                groupDiv.appendChild(filesDiv);
+                pairList.appendChild(groupDiv);
+            }
+
+            // FIX #2: NIEPARNE NEW
+            if (unpairedNew.length > 0) {
+                const groupDiv = document.createElement('div');
+                groupDiv.className = 'icao-group';
+
+                const header = document.createElement('div');
+                header.className = 'icao-header unpaired-new';
+                header.innerHTML = `<span>🟢 NEW (${unpairedNew.length})</span><span class="arrow">▼</span>`;
+                header.onclick = (e) => {
+                    e.stopPropagation();
+                    header.classList.toggle('collapsed');
+                    filesDiv.classList.toggle('hidden');
+                };
+                groupDiv.appendChild(header);
+
+                const filesDiv = document.createElement('div');
+                filesDiv.className = 'icao-files';
+
+                unpairedNew.forEach((item, index) => {
+                    const itemDiv = document.createElement('div');
+                    itemDiv.className = 'pair-item-sidebar';
+                    if (selectedUnpairedNew === index) {
+                        itemDiv.classList.add('active-unpaired');
+                    }
+
+                    const nameDiv = document.createElement('div');
+                    nameDiv.className = 'pair-name';
+                    nameDiv.innerHTML = `
+                        <div class="pair-name-main">${item.name}</div>
+                        <div class="pair-name-pages">${item.totalPages}s</div>
+                    `;
+
+                    itemDiv.appendChild(nameDiv);
+                    itemDiv.onclick = () => {
+                        selectUnpairedNew(index);
+                    };
+                    
+                    filesDiv.appendChild(itemDiv);
+                });
+
+                groupDiv.appendChild(filesDiv);
+                pairList.appendChild(groupDiv);
+            }
+        }
+
+        // FIX #2: Funkcje wyboru nieparnych map
+        async function selectUnpairedOld(index) {
+            if (selectedUnpairedOld === index) {
+                // Odklikanie - pokaż tylko tę mapę
+                selectedUnpairedOld = index;
+                selectedUnpairedNew = null;
+            } else {
+                selectedUnpairedOld = index;
+            }
+            
+            renderPairList();
+            await renderUnpairedView();
+        }
+
+        async function selectUnpairedNew(index) {
+            if (selectedUnpairedNew === index) {
+                // Odklikanie - pokaż tylko tę mapę
+                selectedUnpairedNew = index;
+                selectedUnpairedOld = null;
+            } else {
+                selectedUnpairedNew = index;
+            }
+            
+            renderPairList();
+            await renderUnpairedView();
+        }
+
+        async function renderUnpairedView() {
+            const viewer = document.getElementById('viewer');
+            viewer.innerHTML = '';
+            document.getElementById('canvasLabel').style.display = 'block';
+            document.getElementById('resetZoomBtn').style.display = 'block';
+            document.getElementById('pageNav').style.display = 'none';
+
+            if (selectedUnpairedOld !== null && selectedUnpairedNew !== null) {
+                // Oba wybrane - porównanie
+                await renderManualPair();
+            } else if (selectedUnpairedOld !== null) {
+                // Tylko OLD
+                await renderSingleUnpaired(unpairedOld[selectedUnpairedOld], 'OLD');
+            } else if (selectedUnpairedNew !== null) {
+                // Tylko NEW
+                await renderSingleUnpaired(unpairedNew[selectedUnpairedNew], 'NEW');
+            }
+        }
+
+        async function renderSingleUnpaired(item, label) {
+            const viewer = document.getElementById('viewer');
+            const canvasLabel = document.getElementById('canvasLabel');
+            
+            const container = document.createElement('div');
+            container.className = 'canvas-container';
+            container.id = 'singleContainer';
+
+            const canvas = document.createElement('canvas');
+            const page = await item.doc.getPage(1);
+            const scale = 3.0;
+            const viewport = page.getViewport({scale: scale});
+            canvas.width = viewport.width;
+            canvas.height = viewport.height;
+            const ctx = canvas.getContext('2d');
+            await page.render({canvasContext: ctx, viewport: viewport}).promise;
+
+            container.appendChild(canvas);
+            viewer.appendChild(container);
+
+            canvasLabel.textContent = label;
+            canvasLabel.style.background = label === 'OLD' ? 'rgba(220, 53, 69, 0.8)' : 'rgba(40, 167, 69, 0.8)';
+
+            addZoomToCanvas(container);
+        }
+
+        async function renderManualPair() {
+            const oldItem = unpairedOld[selectedUnpairedOld];
+            const newItem = unpairedNew[selectedUnpairedNew];
+            
+            // Tworzy tymczasową parę i renderuje w trybie toggle
+            const tempPair = {
+                oldDoc: oldItem.doc,
+                newDoc: newItem.doc,
+                totalPages: Math.max(oldItem.totalPages, newItem.totalPages)
+            };
+
+            await renderToggle(tempPair, 1);
+        }
+
+        function toggleCheckbox(index) {
+            if (checkedPairs.has(index)) {
+                checkedPairs.delete(index);
+            } else {
+                checkedPairs.add(index);
+            }
+            renderPairList();
+            updateStats();
+        }
+
+        async function loadPair(index) {
+            if (index < 0 || index >= pdfPairs.length) return;
+
+            currentPairIndex = index;
+            currentPageIndex = 0;
+            checkedPairs.add(index);
+
+            renderPairList();
+            updateStats();
+
+            const pair = pdfPairs[index];
+            
+            const pageNav = document.getElementById('pageNav');
+            if (pair.totalPages > 1) {
+                pageNav.style.display = 'flex';
+                updatePageInfo();
+            } else {
+                pageNav.style.display = 'none';
+            }
+
+            await renderCurrentPage();
+        }
+
+        async function renderCurrentPage() {
+            const pair = pdfPairs[currentPairIndex];
+            const pageNum = currentPageIndex + 1;
+            const viewer = document.getElementById('viewer');
+            viewer.innerHTML = '';
+            viewer.style.display = '';
+
+            document.getElementById('canvasLabel').style.display = 'block';
+            document.getElementById('resetZoomBtn').style.display = 'block';
+
+            syncState = { zoom: 1, panX: 0, panY: 0 };
+
+            if (currentMode === 'toggle') {
+                await renderToggle(pair, pageNum);
+            } else if (currentMode === 'overlay') {
+                await renderOverlay(pair, pageNum);
+            } else {
+                await renderSideBySide(pair, pageNum);
+            }
+        }
+
+        async function renderToggle(pair, pageNum) {
+            const viewer = document.getElementById('viewer');
+            const label = document.getElementById('canvasLabel');
+            
+            const container = document.createElement('div');
+            container.className = 'canvas-container';
+            container.style.position = 'relative';
+            container.id = 'toggleContainer';
+
+            const oldCanvas = document.createElement('canvas');
+            oldCanvas.id = 'toggleCanvasOld';
+            
+            const newCanvas = document.createElement('canvas');
+            newCanvas.id = 'toggleCanvasNew';
+            newCanvas.style.position = 'absolute';
+            newCanvas.style.top = '0';
+            newCanvas.style.left = '0';
+
+            container.appendChild(oldCanvas);
+            container.appendChild(newCanvas);
+            viewer.appendChild(container);
+
+            const scale = 3.0;
+
+            if (pageNum <= pair.oldDoc.numPages) {
+                const page = await pair.oldDoc.getPage(pageNum);
+                const viewport = page.getViewport({scale: scale});
+                oldCanvas.width = viewport.width;
+                oldCanvas.height = viewport.height;
+                const ctx = oldCanvas.getContext('2d');
+                await page.render({canvasContext: ctx, viewport: viewport}).promise;
+            }
+
+            if (pageNum <= pair.newDoc.numPages) {
+                const page = await pair.newDoc.getPage(pageNum);
+                const viewport = page.getViewport({scale: scale});
+                newCanvas.width = viewport.width;
+                newCanvas.height = viewport.height;
+                const ctx = newCanvas.getContext('2d');
+                await page.render({canvasContext: ctx, viewport: viewport}).promise;
+            }
+
+            showingOld = true;
+            updateToggleView();
+            addZoomToCanvas(container);
+        }
+
+        function updateToggleView() {
+            const oldCanvas = document.getElementById('toggleCanvasOld');
+            const newCanvas = document.getElementById('toggleCanvasNew');
+            const label = document.getElementById('canvasLabel');
+            
+            if (!oldCanvas || !newCanvas || !label) return;
+
+            if (viewMode === 'old' || (viewMode === 'auto' && showingOld)) {
+                oldCanvas.style.visibility = 'visible';
+                oldCanvas.style.opacity = '1';
+                newCanvas.style.visibility = 'hidden';
+                newCanvas.style.opacity = '0';
+                label.textContent = 'OLD';
+                label.style.background = 'rgba(220, 53, 69, 0.8)';
+            } else {
+                oldCanvas.style.visibility = 'hidden';
+                oldCanvas.style.opacity = '0';
+                newCanvas.style.visibility = 'visible';
+                newCanvas.style.opacity = '1';
+                label.textContent = 'NEW';
+                label.style.background = 'rgba(40, 167, 69, 0.8)';
+            }
+        }
+
+        async function renderOverlay(pair, pageNum) {
+            const viewer = document.getElementById('viewer');
+            const label = document.getElementById('canvasLabel');
+            
+            const container = document.createElement('div');
+            container.className = 'canvas-container';
+            container.style.position = 'relative';
+            container.id = 'overlayContainer';
+
+            const oldCanvas = document.createElement('canvas');
+            const newCanvas = document.createElement('canvas');
+            newCanvas.style.position = 'absolute';
+            newCanvas.style.top = '0';
+            newCanvas.style.left = '0';
+
+            label.textContent = 'OLD (czerwony) + NEW (zielony)';
+            label.style.background = 'rgba(0,0,0,0.8)';
+
+            const scale = 3.0;
+
+            if (pageNum <= pair.oldDoc.numPages) {
+                const page = await pair.oldDoc.getPage(pageNum);
+                const viewport = page.getViewport({scale: scale});
+                oldCanvas.width = viewport.width;
+                oldCanvas.height = viewport.height;
+                const ctx = oldCanvas.getContext('2d');
+                await page.render({canvasContext: ctx, viewport: viewport}).promise;
+                
+                oldCanvas.style.filter = 'grayscale(100%) brightness(0.5) sepia(100%) saturate(10000%) hue-rotate(-10deg)';
+            }
+
+            if (pageNum <= pair.newDoc.numPages) {
+                const page = await pair.newDoc.getPage(pageNum);
+                const viewport = page.getViewport({scale: scale});
+                newCanvas.width = viewport.width;
+                newCanvas.height = viewport.height;
+                const ctx = newCanvas.getContext('2d');
+                await page.render({canvasContext: ctx, viewport: viewport}).promise;
+                
+                newCanvas.style.filter = 'grayscale(100%) brightness(0.5) sepia(100%) saturate(10000%) hue-rotate(70deg)';
+                newCanvas.style.opacity = document.getElementById('opacityRange').value / 100;
+            }
+
+            container.appendChild(oldCanvas);
+            container.appendChild(newCanvas);
+            viewer.appendChild(container);
+
+            addZoomToCanvas(container);
+        }
+
+        async function renderSideBySide(pair, pageNum) {
+            const viewer = document.getElementById('viewer');
+            const label = document.getElementById('canvasLabel');
+            
+            label.style.display = 'none';
+            
+            const sidebyContainer = document.createElement('div');
+            sidebyContainer.className = 'sidebyside-container';
+            sidebyContainer.id = 'sidebyContainer';
+
+            const scale = 3.0;
+
+            const leftViewer = document.createElement('div');
+            leftViewer.className = 'sidebyside-viewer';
+            leftViewer.id = 'leftViewer';
+            
+            const oldLabel = document.createElement('div');
+            oldLabel.className = 'sidebyside-label old';
+            oldLabel.textContent = 'OLD';
+            leftViewer.appendChild(oldLabel);
+            
+            if (pageNum <= pair.oldDoc.numPages) {
+                const containerOld = document.createElement('div');
+                containerOld.className = 'canvas-container';
+                containerOld.id = 'oldContainer';
+                
+                const canvas = document.createElement('canvas');
+                const page = await pair.oldDoc.getPage(pageNum);
+                const viewport = page.getViewport({scale: scale});
+                canvas.width = viewport.width;
+                canvas.height = viewport.height;
+                const ctx = canvas.getContext('2d');
+                await page.render({canvasContext: ctx, viewport: viewport}).promise;
+                
+                containerOld.appendChild(canvas);
+                leftViewer.appendChild(containerOld);
+            }
+            
+            const rightViewer = document.createElement('div');
+            rightViewer.className = 'sidebyside-viewer';
+            rightViewer.id = 'rightViewer';
+            
+            const newLabel = document.createElement('div');
+            newLabel.className = 'sidebyside-label new';
+            newLabel.textContent = 'NEW';
+            rightViewer.appendChild(newLabel);
+            
+            if (pageNum <= pair.newDoc.numPages) {
+                const containerNew = document.createElement('div');
+                containerNew.className = 'canvas-container';
+                containerNew.id = 'newContainer';
+                
+                const canvas = document.createElement('canvas');
+                const page = await pair.newDoc.getPage(pageNum);
+                const viewport = page.getViewport({scale: scale});
+                canvas.width = viewport.width;
+                canvas.height = viewport.height;
+                const ctx = canvas.getContext('2d');
+                await page.render({canvasContext: ctx, viewport: viewport}).promise;
+                
+                containerNew.appendChild(canvas);
+                rightViewer.appendChild(containerNew);
+            }
+
+            sidebyContainer.appendChild(leftViewer);
+            sidebyContainer.appendChild(rightViewer);
+            viewer.appendChild(sidebyContainer);
+            
+            addSyncedZoomSideBySide();
+        }
+
+        function addSyncedZoomSideBySide() {
+            const oldContainer = document.getElementById('oldContainer');
+            const newContainer = document.getElementById('newContainer');
+            const leftViewer = document.getElementById('leftViewer');
+            const rightViewer = document.getElementById('rightViewer');
+            const resetBtn = document.getElementById('resetZoomBtn');
+
+            if (!oldContainer || !newContainer) return;
+
+            let isPanning = false;
+            let startX = 0, startY = 0;
+            let activeViewer = null;
+
+            resetBtn.onclick = () => {
+                syncState = { zoom: 1, panX: 0, panY: 0 };
+                updateSyncTransform();
+            };
+
+            const handleWheel = (e, targetContainer, targetViewer) => {
+                e.preventDefault();
+                
+                // FIX #3: LEPSZY zoom do kursora
+                const rect = targetViewer.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                
+                // Punkt w układzie canvas PRZED zoomem
+                const pointX = (x - targetViewer.scrollLeft) / syncState.zoom - syncState.panX;
+                const pointY = (y - targetViewer.scrollTop) / syncState.zoom - syncState.panY;
+                
+                const oldZoom = syncState.zoom;
+                const delta = e.deltaY > 0 ? -0.1 : 0.1;
+                syncState.zoom = Math.max(0.3, Math.min(5, syncState.zoom + delta));
+                
+                // Dostosuj pan tak żeby punkt pozostał pod kursorem
+                syncState.panX = (x - targetViewer.scrollLeft) / syncState.zoom - pointX;
+                syncState.panY = (y - targetViewer.scrollTop) / syncState.zoom - pointY;
+                
+                updateSyncTransform();
+            };
+
+            const handleMouseDown = (e, viewer) => {
+                isPanning = true;
+                startX = e.clientX;
+                startY = e.clientY;
+                activeViewer = viewer;
+                oldContainer.style.cursor = 'grabbing';
+                newContainer.style.cursor = 'grabbing';
+                e.preventDefault();
+            };
+
+            const handleMouseMove = (e) => {
+                if (!isPanning) return;
+                
+                const dx = (e.clientX - startX) / syncState.zoom;
+                const dy = (e.clientY - startY) / syncState.zoom;
+                
+                // FIX #5: Blokada poziomego ruchu
+                const oldRect = oldContainer.getBoundingClientRect();
+                const viewerRect = activeViewer.getBoundingClientRect();
+                const mapFitsHorizontally = (oldRect.width * syncState.zoom) <= viewerRect.width;
+                
+                if (!mapFitsHorizontally) {
+                    syncState.panX += dx;
+                }
+                syncState.panY += dy;
+                
+                updateSyncTransform();
+                
+                startX = e.clientX;
+                startY = e.clientY;
+            };
+
+            const handleMouseUp = () => {
+                if (isPanning) {
+                    isPanning = false;
+                    oldContainer.style.cursor = 'grab';
+                    newContainer.style.cursor = 'grab';
+                }
+            };
+
+            leftViewer.addEventListener('wheel', (e) => handleWheel(e, oldContainer, leftViewer));
+            rightViewer.addEventListener('wheel', (e) => handleWheel(e, newContainer, rightViewer));
+            leftViewer.addEventListener('mousedown', (e) => handleMouseDown(e, leftViewer));
+            rightViewer.addEventListener('mousedown', (e) => handleMouseDown(e, rightViewer));
+            document.addEventListener('mousemove', handleMouseMove);
+            document.addEventListener('mouseup', handleMouseUp);
+
+            oldContainer.style.cursor = 'grab';
+            newContainer.style.cursor = 'grab';
+
+            updateSyncTransform();
+        }
+
+        function updateSyncTransform() {
+            const oldContainer = document.getElementById('oldContainer');
+            const newContainer = document.getElementById('newContainer');
+            
+            if (oldContainer && newContainer) {
+                const transform = `scale(${syncState.zoom}) translate(${syncState.panX}px, ${syncState.panY}px)`;
+                oldContainer.style.transform = transform;
+                newContainer.style.transform = transform;
+                oldContainer.style.transformOrigin = '0 0';
+                newContainer.style.transformOrigin = '0 0';
+            }
+        }
+
+        function addZoomToCanvas(container) {
+            let zoom = 1;
+            let isPanning = false;
+            let startX = 0, startY = 0;
+            let panX = 0, panY = 0;
+
+            const wrapper = document.getElementById('viewerWrapper');
+            const resetBtn = document.getElementById('resetZoomBtn');
+
+            resetBtn.onclick = () => {
+                zoom = 1;
+                panX = 0;
+                panY = 0;
+                container.style.transform = 'scale(1) translate(0px, 0px)';
+                container.style.transformOrigin = '0 0';
+            };
+
+            container.addEventListener('wheel', (e) => {
+                e.preventDefault();
+                
+                // FIX #3: LEPSZY zoom do kursora
+                const rect = wrapper.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                
+                // Punkt w układzie canvas PRZED zoomem
+                const pointX = (x - wrapper.scrollLeft) / zoom - panX;
+                const pointY = (y - wrapper.scrollTop) / zoom - panY;
+                
+                const oldZoom = zoom;
+                const delta = e.deltaY > 0 ? -0.1 : 0.1;
+                zoom = Math.max(0.3, Math.min(5, zoom + delta));
+                
+                // Dostosuj pan tak żeby punkt pozostał pod kursorem
+                panX = (x - wrapper.scrollLeft) / zoom - pointX;
+                panY = (y - wrapper.scrollTop) / zoom - pointY;
+                
+                container.style.transform = `scale(${zoom}) translate(${panX}px, ${panY}px)`;
+                container.style.transformOrigin = '0 0';
+            });
+
+            container.addEventListener('mousedown', (e) => {
+                isPanning = true;
+                startX = e.clientX;
+                startY = e.clientY;
+                container.style.cursor = 'grabbing';
+                e.preventDefault();
+            });
+
+            document.addEventListener('mousemove', (e) => {
+                if (!isPanning) return;
+                
+                const dx = (e.clientX - startX) / zoom;
+                const dy = (e.clientY - startY) / zoom;
+                
+                // FIX #5: Blokada poziomego ruchu
+                const rect = container.getBoundingClientRect();
+                const wrapperRect = wrapper.getBoundingClientRect();
+                const mapFitsHorizontally = (rect.width * zoom) <= wrapperRect.width;
+                
+                if (!mapFitsHorizontally) {
+                    panX += dx;
+                }
+                panY += dy;
+                
+                container.style.transform = `scale(${zoom}) translate(${panX}px, ${panY}px)`;
+                container.style.transformOrigin = '0 0';
+                
+                startX = e.clientX;
+                startY = e.clientY;
+            });
+
+            document.addEventListener('mouseup', () => {
+                if (isPanning) {
+                    isPanning = false;
+                    container.style.cursor = 'grab';
+                }
+            });
+
+            container.style.cursor = 'grab';
+        }
+
+        function toggleAutoMode() {
+            const autoBtn = document.getElementById('autoBtn');
+            const oldBtn = document.getElementById('oldBtn');
+            const newBtn = document.getElementById('newBtn');
+            
+            if (viewMode === 'auto' && autoToggleInterval) {
+                clearInterval(autoToggleInterval);
+                autoToggleInterval = null;
+                viewMode = 'old';
+                autoBtn.classList.remove('active');
+                autoBtn.textContent = '▶️ Auto-Start';
+                oldBtn.classList.add('active-old');
+                newBtn.classList.remove('active-new');
+                showingOld = true;
+                updateToggleView();
+            } else {
+                viewMode = 'auto';
+                const speed = parseInt(document.getElementById('speedRange').value);
+                autoToggleInterval = setInterval(() => {
+                    if (currentMode === 'toggle') {
+                        showingOld = !showingOld;
+                        updateToggleView();
+                    }
+                }, speed);
+                autoBtn.classList.add('active');
+                autoBtn.textContent = '⏸️ Auto-Start';
+                oldBtn.classList.remove('active-old');
+                newBtn.classList.remove('active-new');
+            }
+        }
+
+        function showOldOnly() {
+            if (autoToggleInterval) {
+                clearInterval(autoToggleInterval);
+                autoToggleInterval = null;
+            }
+            
+            viewMode = 'old';
+            showingOld = true;
+            
+            const autoBtn = document.getElementById('autoBtn');
+            const oldBtn = document.getElementById('oldBtn');
+            const newBtn = document.getElementById('newBtn');
+            
+            autoBtn.classList.remove('active');
+            autoBtn.textContent = '▶️ Auto-Start';
+            oldBtn.classList.add('active-old');
+            newBtn.classList.remove('active-new');
+            
+            updateToggleView();
+        }
+
+        function showNewOnly() {
+            if (autoToggleInterval) {
+                clearInterval(autoToggleInterval);
+                autoToggleInterval = null;
+            }
+            
+            viewMode = 'new';
+            showingOld = false;
+            
+            const autoBtn = document.getElementById('autoBtn');
+            const oldBtn = document.getElementById('oldBtn');
+            const newBtn = document.getElementById('newBtn');
+            
+            autoBtn.classList.remove('active');
+            autoBtn.textContent = '▶️ Auto-Start';
+            oldBtn.classList.remove('active-old');
+            newBtn.classList.add('active-new');
+            
+            updateToggleView();
+        }
+
+        function setMode(mode) {
+            currentMode = mode;
+            document.querySelectorAll('.mode-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            if (selectedUnpairedOld !== null || selectedUnpairedNew !== null) {
+                renderUnpairedView();
+            } else {
+                renderCurrentPage();
+            }
+        }
+
+        function prevPage() {
+            if (currentPageIndex > 0) {
+                currentPageIndex--;
+                updatePageInfo();
+                renderCurrentPage();
+            }
+        }
+
+        function nextPage() {
+            const pair = pdfPairs[currentPairIndex];
+            if (currentPageIndex < pair.totalPages - 1) {
+                currentPageIndex++;
+                updatePageInfo();
+                renderCurrentPage();
+            }
+        }
+
+        function updatePageInfo() {
+            const pair = pdfPairs[currentPairIndex];
+            document.getElementById('pageInfo').textContent = `Strona ${currentPageIndex + 1} z ${pair.totalPages}`;
+            document.querySelector('.page-nav button:first-child').disabled = currentPageIndex === 0;
+            document.querySelector('.page-nav button:last-child').disabled = currentPageIndex === pair.totalPages - 1;
+        }
+
+        function updateStats() {
+            document.getElementById('totalPairs').textContent = pdfPairs.length;
+            document.getElementById('checkedPairs').textContent = checkedPairs.size;
+            document.getElementById('currentPairNum').textContent = 
+                pdfPairs.length > 0 ? `${currentPairIndex + 1}/${pdfPairs.length}` : '-';
+        }
+
+        function toggleFullscreen() {
+            const elem = document.getElementById('viewerWrapper');
+            if (!document.fullscreenElement) {
+                elem.requestFullscreen();
+            } else {
+                document.exitFullscreen();
+            }
+        }
+
+        function resetAndUpload() {
+            if (autoToggleInterval) clearInterval(autoToggleInterval);
+            
+            pdfPairs = [];
+            unpairedOld = [];
+            unpairedNew = [];
+            currentPairIndex = 0;
+            currentPageIndex = 0;
+            checkedPairs.clear();
+            oldFiles = [];
+            newFiles = [];
+            syncState = { zoom: 1, panX: 0, panY: 0 };
+            viewMode = 'auto';
+            selectedUnpairedOld = null;
+            selectedUnpairedNew = null;
+            document.getElementById('comparisonSection').style.display = 'none';
+            document.getElementById('uploadSection').style.display = 'block';
+            document.getElementById('compareButtonContainer').style.display = 'none';
+            oldFileInput.value = '';
+            newFileInput.value = '';
+            updateFileInfo();
+        }
+
+        document.getElementById('speedRange').addEventListener('input', (e) => {
+            const value = e.target.value;
+            document.getElementById('speedValue').textContent = (value / 1000).toFixed(1) + 's';
+            if (autoToggleInterval) {
+                clearInterval(autoToggleInterval);
+                const speed = parseInt(value);
+                autoToggleInterval = setInterval(() => {
+                    if (currentMode === 'toggle') {
+                        showingOld = !showingOld;
+                        updateToggleView();
+                    }
+                }, speed);
+            }
+        });
+
+        document.getElementById('opacityRange').addEventListener('input', (e) => {
+            const value = e.target.value;
+            document.getElementById('opacityValue').textContent = value + '%';
+            if (currentMode === 'overlay') {
+                const newCanvas = document.querySelector('#overlayContainer canvas:last-of-type');
+                if (newCanvas) newCanvas.style.opacity = value / 100;
+            }
+        });
+
+        document.addEventListener('keydown', (e) => {
+            if (pdfPairs.length === 0) return;
+            switch(e.key) {
+                case 'ArrowLeft': prevPage(); break;
+                case 'ArrowRight': nextPage(); break;
+                case 'ArrowUp': if (currentPairIndex > 0) loadPair(currentPairIndex - 1); break;
+                case 'ArrowDown': if (currentPairIndex < pdfPairs.length - 1) loadPair(currentPairIndex + 1); break;
+                case ' ': e.preventDefault(); toggleAutoMode(); break;
+                case '1': setMode('toggle'); break;
+                case '2': setMode('overlay'); break;
+                case '3': setMode('sidebyside'); break;
+            }
+        });
+    </script>
+</body>
+</html>
