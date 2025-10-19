@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>JeppCMPR v2.3.1 - PDF Comparison Tool</title>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
     <style>
         * {
@@ -14,11 +14,12 @@
         }
 
         body {
-            font-family: 'Poppins', sans-serif;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
             background: url('A_monochromatic_background_inspired_by_Jeppesen_en.png') no-repeat center center fixed;
             background-size: cover;
             min-height: 100vh;
-            padding: 20px;
+            padding: 0;
+            margin: 0;
             position: relative;
             -webkit-font-smoothing: antialiased;
             -moz-osx-font-smoothing: grayscale;
@@ -39,26 +40,31 @@
         }
 
         .container {
-            max-width: 2200px;
-            margin: 0 auto;
-            background: white;
-            border-radius: 20px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            max-width: 100%;
+            margin: 0;
+            background: rgba(43, 43, 59, 0.5);
+            border-radius: 0;
+            box-shadow: none;
             overflow: hidden;
+            min-height: 100vh;
         }
 
         .header {
             background: rgba(0, 86, 214, 0.9);
             color: white;
-            padding: 10px 30px;
+            padding: 20px 30px;
             text-align: center;
             position: relative;
+            margin: 0;
+            border-radius: 0;
         }
 
         .header h1 {
-            font-size: 2em;
+            font-size: 1.8em;
             margin-bottom: 5px;
             text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+            font-weight: 600;
+            letter-spacing: 0.5px;
         }
 
         .header p {
@@ -79,6 +85,7 @@
         .upload-section {
             padding: 40px;
             text-align: center;
+            background: transparent;
         }
 
         .drop-zone {
@@ -139,12 +146,12 @@
         }
 
         .btn-secondary {
-            background: #e0e0e0;
-            color: #333;
+            background: rgba(60, 60, 79, 0.8);
+            color: white;
         }
 
         .btn-secondary:hover {
-            background: #d0d0d0;
+            background: rgba(60, 60, 79, 1);
         }
 
         .file-input {
@@ -153,6 +160,7 @@
 
         .comparison-section {
             display: none;
+            padding: 20px 10px;
         }
 
         .comparison-grid {
@@ -163,25 +171,28 @@
         }
 
         .sidebar {
-            background: #f5f5f5;
-            padding: 10px;
+            background: rgba(43, 43, 59, 0.95);
+            padding: 15px;
             display: flex;
             flex-direction: column;
             overflow-y: auto;
             max-height: calc(100vh - 140px);
+            border-radius: 12px;
+            margin: 10px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.4);
         }
 
         .sidebar-left {
-            border-right: 3px solid rgba(0, 86, 214, 0.9);
+            border-right: none;
         }
 
         .sidebar-right {
-            border-left: 3px solid rgba(0, 86, 214, 0.9);
+            border-left: none;
         }
 
         .sidebar h3 {
             margin-bottom: 10px;
-            color: rgba(0, 86, 214, 0.9);
+            color: white;
             font-size: 1.2em;
         }
 
@@ -221,7 +232,7 @@
             text-align: center;
             font-size: 0.75em;
             font-weight: bold;
-            background: white;
+            background: rgba(60, 60, 79, 0.5);
             cursor: pointer;
             transition: all 0.2s ease;
             min-height: 50px;
@@ -229,6 +240,7 @@
             flex-direction: column;
             justify-content: center;
             align-items: center;
+            color: white;
         }
 
         .mini-dropzone.old {
@@ -242,7 +254,7 @@
         }
 
         .mini-dropzone.drag-over {
-            background: rgba(240, 245, 255, 0.5);
+            background: rgba(80, 80, 99, 0.6);
             transform: scale(1.05);
         }
 
@@ -338,7 +350,7 @@
 
         .control-item label {
             font-weight: bold;
-            color: #333;
+            color: white;
             font-size: 1.0em;
         }
 
@@ -349,7 +361,7 @@
         .control-item .value-display {
             text-align: center;
             font-size: 0.8em;
-            color: #666;
+            color: #ccc;
         }
 
         .mode-buttons {
@@ -361,7 +373,8 @@
         .mode-btn {
             padding: 8px;
             border: 2px solid rgba(0, 86, 214, 0.9);
-            background: white;
+            background: rgba(60, 60, 79, 0.5);
+            color: white;
             border-radius: 8px;
             cursor: pointer;
             transition: all 0.3s ease;
@@ -390,8 +403,8 @@
             flex: 1;
             padding: 8px;
             border: 2px solid #999;
-            background: #e0e0e0;
-            color: #333;
+            background: rgba(60, 60, 79, 0.5);
+            color: white;
             border-radius: 8px;
             cursor: pointer;
             transition: all 0.3s ease;
@@ -414,8 +427,8 @@
         .auto-btn {
             padding: 8px;
             border: 2px solid #999;
-            background: #e0e0e0;
-            color: #333;
+            background: rgba(60, 60, 79, 0.5);
+            color: white;
             border-radius: 8px;
             cursor: pointer;
             transition: all 0.3s ease;
@@ -448,8 +461,8 @@
         .ocr-btn {
             padding: 8px;
             border: 2px solid #ffc107;
-            background: white;
-            color: #333;
+            background: rgba(60, 60, 79, 0.5);
+            color: white;
             border-radius: 8px;
             cursor: pointer;
             transition: all 0.3s ease;
@@ -527,7 +540,7 @@
 
         .pair-item-sidebar {
             padding: 8px;
-            background: white;
+            background: rgba(60, 60, 79, 0.5);
             margin: 3px 0;
             border-radius: 4px;
             cursor: pointer;
@@ -537,6 +550,7 @@
             display: flex;
             align-items: center;
             gap: 6px;
+            color: white;
         }
 
         .pair-item-sidebar .checkbox {
@@ -548,7 +562,7 @@
             align-items: center;
             justify-content: center;
             flex-shrink: 0;
-            background: white;
+            background: rgba(60, 60, 79, 0.8);
             transition: all 0.2s ease;
             font-size: 10px;
         }
@@ -565,7 +579,7 @@
         }
 
         .pair-item-sidebar:hover {
-            background: rgba(240, 245, 255, 0.5);
+            background: rgba(80, 80, 99, 0.6);
             transform: translateX(2px);
         }
 
@@ -607,7 +621,7 @@
 
         .pair-item-sidebar .pair-name-pages {
             font-size: 0.9em;
-            color: #666;
+            color: #ccc;
             margin-top: 2px;
         }
 
@@ -660,17 +674,18 @@
 
         .unpaired-item-sidebar {
             padding: 6px 8px;
-            background: white;
+            background: rgba(60, 60, 79, 0.5);
             margin: 2px 0;
             border-radius: 4px;
             cursor: grab;
             transition: all 0.2s ease;
             font-size: 0.85em;
             border-left: 2px solid transparent;
+            color: white;
         }
 
         .unpaired-item-sidebar:hover {
-            background: rgba(240, 245, 255, 0.5);
+            background: rgba(80, 80, 99, 0.6);
             transform: translateX(2px);
         }
 
@@ -688,7 +703,7 @@
 
         .viewer-wrapper {
             padding: 20px;
-            background: #e9ecef;
+            background: rgba(43, 43, 59, 0.7);
             display: flex;
             align-items: flex-start;
             justify-content: center;
@@ -712,7 +727,7 @@
 
         .sidebyside-viewer {
             position: relative;
-            background: #fff;
+            background: rgba(60, 60, 79, 0.5);
             border-radius: 8px;
             overflow: auto;
             display: flex;
@@ -936,8 +951,8 @@
             align-items: center;
             justify-content: center;
             padding: 10px;
-            background: #f8f9fa;
-            border-bottom: 1px solid #dee2e6;
+            background: rgba(43, 43, 59, 0.9);
+            border-bottom: 1px solid rgba(0, 86, 214, 0.5);
         }
 
         .page-nav button {
@@ -958,26 +973,28 @@
 
         .page-info {
             padding: 8px 16px;
-            background: white;
+            background: rgba(60, 60, 79, 0.8);
             border-radius: 5px;
             font-weight: bold;
             font-size: 0.85em;
+            color: white;
         }
 
         .stats-box {
             padding: 10px;
-            background: white;
+            background: rgba(60, 60, 79, 0.8);
             border-radius: 8px;
             font-size: 1.0em;
+            color: white;
         }
 
         .stats-box div {
             margin: 4px 0;
-            color: #666;
+            color: #ccc;
         }
 
         .stats-box strong {
-            color: #333;
+            color: white;
         }
 
         .ocr-progress {
@@ -1007,7 +1024,7 @@
                     <button class="btn btn-primary" onclick="loadOldFolder()" style="width: 100%; margin-top: 15px; background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);">
                         📂 Wybierz pliki OLD
                     </button>
-                    <div id="oldFilesCount" style="margin-top: 10px; text-align: center; color: #666;">Nie załadowano</div>
+                    <div id="oldFilesCount" style="margin-top: 10px; text-align: center; color: #ccc;">Nie załadowano</div>
                 </div>
                 
                 <div>
@@ -1020,7 +1037,7 @@
                     <button class="btn btn-primary" onclick="loadNewFolder()" style="width: 100%; margin-top: 15px; background: linear-gradient(135deg, #28a745 0%, #218838 100%);">
                         📂 Wybierz pliki NEW
                     </button>
-                    <div id="newFilesCount" style="margin-top: 10px; text-align: center; color: #666;">Nie załadowano</div>
+                    <div id="newFilesCount" style="margin-top: 10px; text-align: center; color: #ccc;">Nie załadowano</div>
                 </div>
             </div>
 
@@ -1032,23 +1049,6 @@
 
             <input type="file" id="oldFileInput" class="file-input" accept=".pdf" multiple>
             <input type="file" id="newFileInput" class="file-input" accept=".pdf" multiple>
-
-            <div style="margin-top: 30px; padding: 20px; background: #fff3cd; border-radius: 10px; border: 2px solid #ffc107;">
-                <strong>💡 Instrukcja:</strong><br>
-                1. Wybierz wszystkie pliki PDF z folderu OLD<br>
-                2. Wybierz wszystkie pliki PDF z folderu NEW<br>
-                3. Kliknij "🚀 Rozpocznij porównanie"<br>
-                <br>
-                <strong>🆕 NOWOŚĆ v2.1.6:</strong><br>
-                • 🔙 <strong>Przywrócona logika z v2.1.1!</strong> Działało najlepiej!<br>
-                • 🎯 Suwak: 0% = wykrywa wszystko, 100% = tylko duże zmiany<br>
-                • 📏 Stałe minArea = 25 pikseli (sprawdzone ustawienie)<br>
-                • 🎨 <strong>NAPRAWIONY overlay w trybie toggle!</strong> Teraz JEDEN overlay nad mapami<br>
-                • 👁️ Żółte kółka widoczne podczas przełączania OLD ↔ NEW<br>
-                • ✅ Pixel diff jako prawdziwa warstwa nad przełączającymi się mapami!<br>
-                <br>
-                <small>💾 Domyślna lokalizacja: <code>N:\3P Model Area\Autocompare\OLD</code> i <code>...\NEW</code></small>
-            </div>
         </div>
 
         <div class="loading" id="loading">
@@ -1059,7 +1059,7 @@
                     0%
                 </div>
             </div>
-            <p id="progressDetail" style="color: #666; font-size: 0.9em;">Przygotowanie...</p>
+            <p id="progressDetail" style="color: #ccc; font-size: 0.9em;">Przygotowanie...</p>
         </div>
 
         <div class="comparison-section" id="comparisonSection">
@@ -1173,7 +1173,7 @@
                             <label>Czułość wykrywania:</label>
                             <input type="range" id="sensitivityRange" min="0" max="100" value="50" step="5">
                             <div class="value-display" id="sensitivityValue">50%</div>
-                            <div style="font-size: 0.75em; color: #666; margin-top: 5px; line-height: 1.3;">
+                            <div style="font-size: 0.75em; color: #ccc; margin-top: 5px; line-height: 1.3;">
                                 <strong>0%:</strong> Wykrywa WSZYSTKO (nawet drobne różnice)<br>
                                 <strong>50%:</strong> ✅ Zbalansowane (zalecane!)<br>
                                 <strong>100%:</strong> Tylko DUŻE różnice<br>
